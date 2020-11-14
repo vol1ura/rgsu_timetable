@@ -5,7 +5,7 @@
 # We use lxml parser, install it if you need: pip3 install lxml
 # Also we use next modules
 from bs4 import BeautifulSoup # Install it if you need: pip3 install beatifulsoup
-import csv
+import csv                    # Install it if you need: pip3 install csv
 from datetime import datetime, timedelta
 import locale
 import re
@@ -37,13 +37,14 @@ print('Begin of week: ', begin_date.strftime("%d/%m/%Y (%A)")) # begin of week
 end_date = begin_date + timedelta(14) # end of two week interval 
 
 dates2w = []
-for i in range(7,13):
+for i in range(13):
     dates2w.append((begin_date + timedelta(i)).strftime("%d.%m.%y"))
-print(dates2w)
 
 if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
 print('This week is odd: ', odd_week)    
+print('Working days selected interval:')
+print(dates2w)
 
 data = []
 for tr in trs[1:]:
@@ -54,15 +55,17 @@ for tr in trs[1:]:
     if len(dates) > 0:
         p = re.compile(r'[а-яА-ЯёЁ" "-]+')
         discipline = p.findall(cells[3].text)[0].strip()
-        if discipline == 'Информатика и информационные технологии в профессиональной деятельности' \
-           or \
-           discipline == 'Информатика и основы информационно-коммуникационных технологий':
-            discipline_s = 'Инф. и ИТ'            
+        if len(discipline) > 16:
+            discipline_s = ''.join([(w if len(w) == 1 else w[0].upper()) for w in discipline.split(' ')])
+        else:
+            discipline_s = discipline
         lesson_type = cells[4].text.strip()
         if lesson_type.lower() == 'лабораторная работа':
-            lesson_type = 'лаба'
-        if lesson_type.lower() == 'практическая работа':
-            lesson_type = 'практика'
+            lesson_type_s = 'лаба'
+        elif lesson_type.lower() == 'практическое занятие':
+            lesson_type_s = 'практика'
+        else:
+            lesson_type_s = lesson_type
         location = cells[5].text.strip()
         group = cells[6].text.strip()
         p = re.compile(r'\d+')
@@ -78,8 +81,8 @@ for tr in trs[1:]:
             
         for date in dates:
             data.append([date, lesson_time[0], date, lesson_time[1],\
-                         location, group + ' ' + discipline, \
-                         discipline_s + ' ' + lesson_type])
+                         location, group + ': ' + discipline + ', ' + lesson_type, \
+                         discipline_s + ' ' + lesson_type_s])
 
 today = time.strftime('%d.%m')
 f = open('calendar_'+today+'.csv', 'w', newline='', encoding='utf8')
