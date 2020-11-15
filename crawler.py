@@ -14,10 +14,12 @@ import time
 
 locale.setlocale(locale.LC_ALL, "")
 
-#teacher = 'Володин+Юрий+Владимирович' # use + instead of space
-
 f = open('settings.txt', encoding='utf8')
 teacher = '+'.join(f.readline().strip().split(' '))
+date_line = list(map(int, f.readline().strip().split('.')))
+begin_date = datetime(date_line[2], date_line[1], date_line[0])
+date_line = list(map(int, f.readline().strip().split('.')))
+end_date = datetime(date_line[2], date_line[1], date_line[0])
 f.close()
 
 def get_html(url):
@@ -34,31 +36,32 @@ soup = BeautifulSoup(html, 'lxml')
 
 trs = soup.find('div', class_="row collapse").find_all('tr')
 
-begin_date = datetime.now()
-while begin_date.strftime("%A") != "понедельник":
-    begin_date += timedelta(1)
-print('Begin of week: ', begin_date.strftime("%d/%m/%Y (%A)")) # begin of week
-end_date = begin_date + timedelta(14) # end of two week interval 
-
-dates2w = []
-for i in range(13):
-    dates2w.append((begin_date + timedelta(i)).strftime("%d.%m.%y"))
-
+# ----- Diagnostic messages --------------------
+date_now = datetime.now()
+while date_now.strftime("%A") != "понедельник":
+    date_now += timedelta(1)
+print('Begin of current week: ', begin_date.strftime("%d/%m/%Y (%A)")) # begin of week
 # Sunday belongs to next week on this site
 if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
 else:
     odd_week = False
 print('This week is odd: ', odd_week)    
-print('Working days in selected interval:')
-print(dates2w)
+# -----------------------------------------------
+
+date_sett = []
+while(begin_date <= end_date):
+    date_sett.append(begin_date.strftime("%d.%m.%y"))
+    begin_date += timedelta(1)
+print('Days in selected interval:')
+print(date_sett)
 
 data = []
 for tr in trs[1:]:
     cells = tr.find_all('td')
     p = re.compile(r'\d{2}\.\d{2}\.\d{2}')
     dates = p.findall(cells[3].text)
-    dates = list(set(dates2w).intersection(set(dates)))
+    dates = list(set(date_sett).intersection(set(dates)))
     if len(dates) > 0:
         p = re.compile(r'[а-яА-ЯёЁ" "-]+')
         discipline = p.findall(cells[3].text)[0].strip()
