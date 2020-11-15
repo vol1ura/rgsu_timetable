@@ -53,13 +53,16 @@ trs = soup.find('div', class_="row collapse").find_all('tr')
 # ----- Diagnostic messages --------------------
 date_now = datetime.now()
 while date_now.strftime("%A") != "понедельник":
-    date_now += timedelta(1)
-print('Begin of current week: ', begin_date.strftime("%d/%m/%Y (%A)")) # begin of week
+    date_now -= timedelta(1)
+print('Begin of current week: ', date_now.strftime("%d/%m/%Y (%A)")) # begin of week
 # Sunday belongs to next week on this site
+#oddness = 
 if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
 else:
     odd_week = False
+if datetime.now().isoweekday() == 7:
+    odd_week = not odd_week
 print('This week is odd: ', odd_week)    
 # -----------------------------------------------
 
@@ -101,16 +104,31 @@ for tr in trs[1:]:
         except:
             print('Something went wrong!!! Bad time format: [ {} ]'.format(cells[1].text))
             print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
-            lesson_time = ['8:15', '22:05']
+            lesson_time = ['8:10', '22:00']
             
         for date in dates:
-            data.append([date, lesson_time[0], date, lesson_time[1],\
-                         location, group + ': ' + discipline + ', ' + lesson_type, \
+            data.append([date, lesson_time[0], lesson_time[1],\
+                         location, group, discipline, lesson_type, \
                          discipline_s + ' ' + lesson_type_s])
+    
+datalines = []
+for i in range(len(data)):
+    j = i + 1
+    while(j < len(data)):
+        if data[i][0] == data[j][0] and data[i][1] == data[j][1] and data[i][7] == data[j][7]:
+            if data[i][3] != data[j][3]:
+                data[j][3] += ' / ' + data[i][3]
+            data[j][4] += ', ' + data[i][4]
+            break
+        j += 1
+    else:
+        datalines.append([data[i][0], data[i][1], data[i][0], data[i][2], data[i][3], \
+                          data[i][4] + ': ' + data[i][5] + ', ' + data[i][6], data[i][7]])
 
-today = time.strftime('%d.%m')
-f = open('calendar_'+today+'.csv', 'w', newline='', encoding='utf8')
+print('Load in selected period equals {} hours. It is {} hours per week.'.format(2 * len(datalines), 7 * 2 * len(datalines) // len(date_sett)))
+
+f = open('calendar_' + time.strftime('%d.%m') + '.csv', 'w', newline='', encoding='utf8')
 with f:
     writer = csv.writer(f)
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description','Subject'])
-    writer.writerows(data)
+    writer.writerows(datalines)
