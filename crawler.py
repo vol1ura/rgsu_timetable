@@ -14,13 +14,27 @@ import time
 
 locale.setlocale(locale.LC_ALL, "")
 
-f = open('settings.txt', encoding='utf8')
-teacher = '+'.join(f.readline().strip().split(' '))
-date_line = list(map(int, f.readline().strip().split('.')))
-begin_date = datetime(date_line[2], date_line[1], date_line[0])
-date_line = list(map(int, f.readline().strip().split('.')))
-end_date = datetime(date_line[2], date_line[1], date_line[0])
-f.close()
+try:
+    f = open('settings.txt', encoding='utf8')
+    try:
+        teacher = '+'.join(f.readline().strip().split(' '))
+        date_line = list(map(int, f.readline().strip().split('.')))
+        begin_date = datetime(date_line[2], date_line[1], date_line[0])
+        date_line = list(map(int, f.readline().strip().split('.')))
+        end_date = datetime(date_line[2], date_line[1], date_line[0])
+    except Exception:
+        teacher = 'Володин+Юрий+Владимирович'
+        begin_date = timedate.now()
+        end_date = timedate.now()
+        print('Error!!! Check correctness of template!')
+        print('I will use default settings...')
+    finally:
+        f.close()
+except(IOError, OSError) as e:
+    print(e)
+    print()
+    print('Error when reading settings.txt !!! Check also file encoding.')
+    exit()
 
 def get_html(url):
     r = requests.get(url) # Response
