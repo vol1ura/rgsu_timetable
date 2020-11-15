@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Volodin Yuriy, 2020
 # volodinjuv@rgsu.net
 # Parsing teacher's timetable on SDO.RSSU.NET
@@ -70,8 +71,8 @@ date_sett = []
 while(begin_date <= end_date):
     date_sett.append(begin_date.strftime("%d.%m.%y"))
     begin_date += timedelta(1)
-print('Days in selected interval:')
-print(date_sett)
+#print('Days in selected interval:')
+#print(date_sett)
 
 data = []
 for tr in trs[1:]:
@@ -102,7 +103,7 @@ for tr in trs[1:]:
             for i in range(2):
                 lesson_time[i] += hmhm[2*i]+':'+hmhm[1 + 2*i]
         except:
-            print('Something went wrong!!! Bad time format: [ {} ]'.format(cells[1].text))
+            print('Bad time format: [ {} ]'.format(cells[1].text))
             print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
             lesson_time = ['8:10', '22:00']
             
@@ -125,7 +126,7 @@ for i in range(len(data)):
         datalines.append([data[i][0], data[i][1], data[i][0], data[i][2], data[i][3], \
                           data[i][4] + ': ' + data[i][5] + ', ' + data[i][6], data[i][7]])
 
-print('Load in selected period equals {} hours. It is {} hours per week.'.format(2 * len(datalines), 7 * 2 * len(datalines) // len(date_sett)))
+print('Load in selected period equals {0} hours. It is {1:.1f} hours per week in average.'.format(2 * len(datalines), 7 * 2 * len(datalines) / max(1, len(date_sett))))
 
 f = open('calendar_' + time.strftime('%d.%m') + '.csv', 'w', newline='', encoding='utf8')
 with f:
