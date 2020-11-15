@@ -32,7 +32,7 @@ trs = soup.find('div', class_="row collapse").find_all('tr')
 
 begin_date = datetime.now()
 while begin_date.strftime("%A") != "понедельник":
-    begin_date -= timedelta(1)
+    begin_date += timedelta(1)
 print('Begin of week: ', begin_date.strftime("%d/%m/%Y (%A)")) # begin of week
 end_date = begin_date + timedelta(14) # end of two week interval 
 
@@ -40,10 +40,13 @@ dates2w = []
 for i in range(13):
     dates2w.append((begin_date + timedelta(i)).strftime("%d.%m.%y"))
 
+# Sunday belongs to next week on this site
 if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
+else:
+    odd_week = False
 print('This week is odd: ', odd_week)    
-print('Working days selected interval:')
+print('Working days in selected interval:')
 print(dates2w)
 
 data = []
