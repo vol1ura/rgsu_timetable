@@ -14,7 +14,11 @@ import time
 
 locale.setlocale(locale.LC_ALL, "")
 
-teacher = 'Володин+Юрий+Владимирович' # use + instead of space
+#teacher = 'Володин+Юрий+Владимирович' # use + instead of space
+
+f = open('settings.txt', encoding='utf8')
+teacher = '+'.join(f.readline().strip().split(' '))
+f.close()
 
 def get_html(url):
     r = requests.get(url) # Response
@@ -93,8 +97,3 @@ with f:
     writer = csv.writer(f)
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description','Subject'])
     writer.writerows(data)
-
-
-
-    
-
