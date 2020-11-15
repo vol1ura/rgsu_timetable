@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Volodin Yuriy, 2020
 # volodinjuv@rgsu.net
 # Parsing teacher's timetable on SDO.RSSU.NET
@@ -10,18 +11,32 @@ from datetime import datetime, timedelta
 import locale
 import re
 import requests               # Install it if you need: pip3 install requests
-import time
+import sys, time
 
 locale.setlocale(locale.LC_ALL, "")
 
-f = open('settings.txt', encoding='utf8')
-teacher = '+'.join(f.readline().strip().split(' '))
-date_line = list(map(int, f.readline().strip().split('.')))
-begin_date = datetime(date_line[2], date_line[1], date_line[0])
-date_line = list(map(int, f.readline().strip().split('.')))
-end_date = datetime(date_line[2], date_line[1], date_line[0])
-f.close()
-
+try:
+    f = open('settings.txt', encoding='utf8')
+    try:
+        teacher = '+'.join(f.readline().strip().split(' '))
+        date_line = list(map(int, f.readline().strip().split('.')))
+        begin_date = datetime(date_line[2], date_line[1], date_line[0])
+        date_line = list(map(int, f.readline().strip().split('.')))
+        end_date = datetime(date_line[2], date_line[1], date_line[0])
+    except Exception as e:
+        print(e)
+        teacher = 'Володин+Юрий+Владимирович'
+        begin_date = timedate.now()
+        end_date = timedate.now()
+        print('Error!!! Check correctness of template!')
+        print('I will use default settings...')
+    finally:
+        f.close()
+except(IOError, OSError) as e:
+    print(e)
+    print()
+    sys.exit('Error when reading settings.txt !!! Check also file encoding.')
+    
 def get_html(url):
     r = requests.get(url) # Response
     if r.status_code != 200:
@@ -39,13 +54,16 @@ trs = soup.find('div', class_="row collapse").find_all('tr')
 # ----- Diagnostic messages --------------------
 date_now = datetime.now()
 while date_now.strftime("%A") != "понедельник":
-    date_now += timedelta(1)
-print('Begin of current week: ', begin_date.strftime("%d/%m/%Y (%A)")) # begin of week
+    date_now -= timedelta(1)
+print('Begin of current week: ', date_now.strftime("%d/%m/%Y (%A)")) # begin of week
 # Sunday belongs to next week on this site
+#oddness = 
 if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
 else:
     odd_week = False
+if datetime.now().isoweekday() == 7:
+    odd_week = not odd_week
 print('This week is odd: ', odd_week)    
 # -----------------------------------------------
 
@@ -53,8 +71,8 @@ date_sett = []
 while(begin_date <= end_date):
     date_sett.append(begin_date.strftime("%d.%m.%y"))
     begin_date += timedelta(1)
-print('Days in selected interval:')
-print(date_sett)
+#print('Days in selected interval:')
+#print(date_sett)
 
 data = []
 for tr in trs[1:]:
@@ -85,18 +103,33 @@ for tr in trs[1:]:
             for i in range(2):
                 lesson_time[i] += hmhm[2*i]+':'+hmhm[1 + 2*i]
         except:
-            print('Something went wrong!!! Bad time format: [ {} ]'.format(cells[1].text))
+            print('Bad time format: [ {} ]'.format(cells[1].text))
             print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
-            lesson_time = ['8:15', '22:05']
+            lesson_time = ['8:10', '22:00']
             
         for date in dates:
-            data.append([date, lesson_time[0], date, lesson_time[1],\
-                         location, group + ': ' + discipline + ', ' + lesson_type, \
+            data.append([date, lesson_time[0], lesson_time[1],\
+                         location, group, discipline, lesson_type, \
                          discipline_s + ' ' + lesson_type_s])
+    
+datalines = []
+for i in range(len(data)):
+    j = i + 1
+    while(j < len(data)):
+        if data[i][0] == data[j][0] and data[i][1] == data[j][1] and data[i][7] == data[j][7]:
+            if data[i][3] != data[j][3]:
+                data[j][3] += ' / ' + data[i][3]
+            data[j][4] += ', ' + data[i][4]
+            break
+        j += 1
+    else:
+        datalines.append([data[i][0], data[i][1], data[i][0], data[i][2], data[i][3], \
+                          data[i][4] + ': ' + data[i][5] + ', ' + data[i][6], data[i][7]])
 
-today = time.strftime('%d.%m')
-f = open('calendar_'+today+'.csv', 'w', newline='', encoding='utf8')
+print('Load in selected period equals {0} hours. It is {1:.1f} hours per week in average.'.format(2 * len(datalines), 7 * 2 * len(datalines) / max(1, len(date_sett))))
+
+f = open('calendar_' + time.strftime('%d.%m') + '.csv', 'w', newline='', encoding='utf8')
 with f:
     writer = csv.writer(f)
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description','Subject'])
-    writer.writerows(data)
+    writer.writerows(datalines)
