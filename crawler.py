@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import locale
 import re
 import requests               # Install it if you need: pip3 install requests
-import time
+import sys, time
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -22,7 +22,8 @@ try:
         begin_date = datetime(date_line[2], date_line[1], date_line[0])
         date_line = list(map(int, f.readline().strip().split('.')))
         end_date = datetime(date_line[2], date_line[1], date_line[0])
-    except Exception:
+    except Exception as e:
+        print(e)
         teacher = 'Володин+Юрий+Владимирович'
         begin_date = timedate.now()
         end_date = timedate.now()
@@ -33,9 +34,8 @@ try:
 except(IOError, OSError) as e:
     print(e)
     print()
-    print('Error when reading settings.txt !!! Check also file encoding.')
-    exit()
-
+    sys.exit('Error when reading settings.txt !!! Check also file encoding.')
+    
 def get_html(url):
     r = requests.get(url) # Response
     if r.status_code != 200:
