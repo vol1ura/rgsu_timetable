@@ -43,7 +43,7 @@ def get_html(url):
         print("Can't get page. Check connection to rgsu.net and try to restart this script.")
     return r.text # Return html page code
 
-rssu_url = 'https://rgsu.net/for-students/timetable/timetable.html?template=&action=index&admin_mode=&nc_ctpl=935&Teacher=' # Calendar on current week
+rssu_url = 'https://rgsu.net/for-students/timetable/timetable.html?template=&action=index&admin_mode=&nc_ctpl=935&Teacher='
 rssu_url += teacher 
 html = get_html(rssu_url)
 
@@ -105,7 +105,7 @@ for tr in trs[1:]:
         except:
             print('Bad time format: [ {} ]'.format(cells[1].text))
             print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
-            lesson_time = ['8:10', '22:00']
+            lesson_time = ['8:00', '22:00']
             
         for date in dates:
             data.append([date, lesson_time[0], lesson_time[1],\
