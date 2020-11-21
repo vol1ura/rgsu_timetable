@@ -26,8 +26,8 @@ try:
     except Exception as e:
         print(e)
         teacher = 'Володин+Юрий+Владимирович'
-        begin_date = timedate.now()
-        end_date = timedate.now()
+        begin_date = datetime.now()
+        end_date = datetime.now()
         print('Error!!! Check correctness of template!')
         print('I will use default settings...')
     finally:
@@ -128,8 +128,12 @@ for i in range(len(data)):
 
 print('Load in selected period equals {0} hours. It is {1:.1f} hours per week in average.'.format(2 * len(datalines), 7 * 2 * len(datalines) / max(1, len(date_sett))))
 
-f = open('calendar_' + time.strftime('%d.%m') + '.csv', 'w', newline='', encoding='utf8')
+f_name = 'calendar_' + time.strftime('%d.%m') + '.csv'
+f = open(f_name, 'w', newline='', encoding='utf8')
 with f:
     writer = csv.writer(f)
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description','Subject'])
     writer.writerows(datalines)
+print('================================================================================')
+print('OK! Timetible was done - see file [' + f_name + '] in this directory.\
+\nImport it to your Google Calendar.')
