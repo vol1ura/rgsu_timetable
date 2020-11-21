@@ -2,7 +2,7 @@
 # Volodin Yuriy, 2020
 # volodinjuv@rgsu.net
 # Parsing teacher's timetable on SDO.RSSU.NET
-# ===========================================
+# ==================== Version 1.31 ===========================================
 # We use lxml parser, install it if you need: pip3 install lxml
 # Also we use next modules
 from bs4 import BeautifulSoup # Install it if you need: pip3 install beatifulsoup
