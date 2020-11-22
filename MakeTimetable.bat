@@ -1,5 +1,5 @@
 @echo off
 cls
 echo --------------- RGSU teacher's timetable -----------------------
-python3 crawler.py
+python crawler.py
 pause

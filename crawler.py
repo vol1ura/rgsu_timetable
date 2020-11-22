@@ -19,10 +19,10 @@ try:
     f = open('settings.txt', encoding='utf8')
     try:
         teacher = '+'.join(f.readline().strip().split(' '))
-        date_line = list(map(int, f.readline().strip().split('.')))
-        begin_date = datetime(date_line[2], date_line[1], date_line[0])
-        date_line = list(map(int, f.readline().strip().split('.')))
-        end_date = datetime(date_line[2], date_line[1], date_line[0])
+        ymd = [int(x) for x in f.readline().strip().split('.')[::-1]]
+        begin_date = datetime(*ymd)
+        ymd = [int(x) for x in f.readline().strip().split('.')[::-1]]
+        end_date = datetime(*ymd)
     except Exception as e:
         print(e)
         teacher = 'Володин+Юрий+Владимирович'
