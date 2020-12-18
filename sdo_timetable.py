@@ -24,10 +24,10 @@ print("This program generate csv file with teacher's timetable for current or ne
 print('If you choose n, timetable will be generated for next week.')
 while True:
     w = input('Make timetable for current week (y/n)? ')
-    if w == 'y':
+    if w.tolower() == 'y' or w.tolower() == 'д': 
         TT_URL = SDO_URL + '/timetable/teacher'
         break
-    elif w == 'n':
+    elif w.tolower() == 'n' or w.tolower() == 'н':
         TT_URL = SDO_URL + '/timetable/teacher/index/week/next'
         date += timedelta(7)
         break
