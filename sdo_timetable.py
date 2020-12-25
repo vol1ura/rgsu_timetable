@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# Volodin Yuriy, 2020
-# volodinjuv@rgsu.net
+# Volodin Yuriy (volodinjuv@rgsu.net), 2020
 # Parsing teacher's timetable on SDO.RSSU.NET
 # ==================== Version 1.4 ===========================================
 import csv
@@ -107,4 +106,4 @@ with f:
     writer = csv.writer(f)
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description', 'Subject'])
     writer.writerows(timetable)
-print('OK! Timetable was done - see file [' + f_name + '] in this directory.\nImport it to your Google Calendar.')
+print(f'OK! Timetable was done - see file [{f_name}] in this directory.\nImport it to your Google Calendar.')

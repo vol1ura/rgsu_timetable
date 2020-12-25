@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-# Volodin Yuriy, 2020
-# volodinjuv@rgsu.net
+# Volodin Yuriy (volodinjuv@rgsu.net), 2020
 # Parsing teacher's timetable on SDO.RSSU.NET
 # ==================== Version 1.4 ===========================================
-# We use lxml parser, install it if you need: pip3 install lxml
-# Also we use next modules
 from bs4 import BeautifulSoup  # Install it if you need: pip3 install bs4
 import csv                    # Install it if you need: pip3 install csv
 from datetime import datetime, timedelta
@@ -57,7 +54,7 @@ trs = soup.find('div', class_="row collapse").find_all('tr')
 date_now = datetime.now()
 while date_now.strftime("%A") != "понедельник":
     date_now -= timedelta(1)
-print('Begin of current week: ', date_now.strftime("%d/%m/%Y (%A)"))  # begin of week
+print('Begin of current week:', date_now.strftime("%d/%m/%Y (%A)"))  # begin of week
 # Sunday belongs to next week on this site
 # oddness =
 if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
@@ -101,7 +98,7 @@ for tr in trs[1:]:
             for i in range(2):
                 lesson_time[i] += hmhm[2*i]+':'+hmhm[1 + 2*i]
         except:
-            print('Bad time format: [ {} ]'.format(cells[1].text))
+            print(f'Bad time format: [ {cells[1].text} ]')
             print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
             lesson_time = ['8:00', '22:00']
             
@@ -123,7 +120,8 @@ for i in range(len(data)):
         datalines.append([data[i][0], data[i][1], data[i][0], data[i][2], data[i][3],
                           data[i][4] + ': ' + data[i][5] + ', ' + data[i][6], data[i][7]])
 
-print('Load in selected period equals {0} hours. It is {1:.1f} hours per week in average.'.format(2 * len(datalines), 7 * 2 * len(datalines) / max(1, len(date_sett))))
+print(f'Load in selected period equals {2 * len(datalines)} hours. '
+      f'It is {7 * 2 * len(datalines) / max(1, len(date_sett)):.1f} hours per week in average.')
 
 f_name = 'calendar_' + time.strftime('%d.%m') + '.csv'
 f = open(f_name, 'w', newline='', encoding='utf8')
@@ -132,4 +130,4 @@ with f:
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description', 'Subject'])
     writer.writerows(datalines)
 print('=' * 80)
-print('OK! Timetable was done - see file [' + f_name + '] in this directory.\nImport it to your Google Calendar.')
+print(f'OK! Timetable was done - see file [{f_name}] in this directory.\nImport it to your Google Calendar.')
