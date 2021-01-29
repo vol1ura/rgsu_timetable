@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # Volodin Yuriy (volodinjuv@rgsu.net), 2020
 # Parsing teacher's timetable on SDO.RSSU.NET
-# ==================== Version 1.4 ===========================================
-from bs4 import BeautifulSoup  # Install it if you need: pip3 install bs4
-import csv                    # Install it if you need: pip3 install csv
+# ==================== Version 1.5 ===========================================
+from bs4 import BeautifulSoup
+import csv
 from datetime import datetime, timedelta
 import locale
 import re
-import requests               # Install it if you need: pip3 install requests
+import requests
 import sys
 import time
 
@@ -16,12 +16,12 @@ locale.setlocale(locale.LC_ALL, "")
 try:
     f = open('settings.txt', encoding='utf8')
     try:
-        teacher = '+'.join(f.readline().strip().split(' '))
+        teacher = f.readline().strip()
         begin_date = datetime.strptime(f.readline().strip(), '%d.%m.%Y')
         end_date = datetime.strptime(f.readline().strip(), '%d.%m.%Y')
     except Exception as e:
         print(e)
-        teacher = 'Володин+Юрий+Владимирович'
+        teacher = 'Володин Юрий Владимирович'
         begin_date = end_date = datetime.now()
         print('Error!!! Check correctness of template!')
         print('I will use default settings...')
@@ -31,49 +31,50 @@ except(IOError, OSError) as e:
     print(e)
     print()
     sys.exit('Error when reading settings.txt !!! Check also file encoding.')
-    
 
-def get_html(url):
-    r = requests.get(url)  # Response
-    if r.status_code != 200:
-        print("Can't get page. Check connection to rgsu.net and try to restart this script.")
-    return r.text  # Return html page code
+WEEKDAYS = {'Понедельник': 1, 'Вторник': 2, 'Среда': 3, 'Четверг': 4, 'Пятница': 5, 'Суббота': 6}
 
+payload = {'template': '', 'action': 'index', 'admin_mode': '', 'nc_ctpl': 935, 'Teacher': teacher}
+rssu_url = 'https://rgsu.net/for-students/timetable/timetable.html'
+timetable = requests.get(rssu_url, params=payload)
+print(timetable.url)
+if not timetable.ok:
+    sys.exit("Can't get page. Check connection to rgsu.net and try to restart this script.")
 
-rssu_url = 'https://rgsu.net/for-students/timetable/timetable.html?template=&action=index&admin_mode=&nc_ctpl=935&Teacher='
-rssu_url += teacher 
-html = get_html(rssu_url)
-
-soup = BeautifulSoup(html, 'html.parser')
+soup = BeautifulSoup(timetable.text, 'html.parser')
 
 trs = soup.find('div', class_="row collapse").find_all('tr')
 
 # ----- Diagnostic messages --------------------
-date_now = datetime.now()
-while date_now.strftime("%A") != "понедельник":
+date_now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+while date_now.isoweekday() != 1:
     date_now -= timedelta(1)
 print('Begin of current week:', date_now.strftime("%d/%m/%Y (%A)"))  # begin of week
 # Sunday belongs to next week on this site
-# oddness =
-if "Нечетная неделя" == soup.find('div', class_="panel-green").find('p', class_="heading").text:
+if "Нечетная" in soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
+    date_now += timedelta(7)
 else:
     odd_week = False
 if datetime.now().isoweekday() == 7:
     odd_week = not odd_week
-print('This week is odd: ', odd_week)    
 # -----------------------------------------------
 
-date_sett = []
-while begin_date <= end_date:
-    date_sett.append(begin_date.strftime("%d.%m.%y"))
-    begin_date += timedelta(1)
+date_range = [begin_date + timedelta(i) for i in range((end_date - begin_date).days + 1)]
 
 data = []
 for tr in trs[1:]:
     cells = tr.find_all('td')
     dates = re.findall(r'\d{2}\.\d{2}\.\d{2}', cells[3].text)
-    dates = list(set(date_sett).intersection(set(dates)))
+    if dates:
+        date_range_str = [date.strftime("%d.%m.%y") for date in date_range]
+        dates = list(set(date_range_str).intersection(set(dates)))
+    else:
+        weekday = WEEKDAYS[cells[0].text.strip()]
+        week = 0 if 'Четная' in cells[2].text else 1
+        dates = [date.strftime("%d.%m.%y") for date in date_range
+                 if date.isoweekday() == weekday and (date - date_now).days // 7 % 2 == week]
+
     if len(dates) > 0:
         discipline = re.findall(r'[а-яА-ЯёЁ -]+', cells[3].text)[0].strip()
         if len(discipline) > 16:
@@ -89,21 +90,16 @@ for tr in trs[1:]:
             lesson_type_s = lesson_type
         location = cells[5].text.strip()
         group = cells[6].text.strip()
-        p = re.compile(r'\d+')
-        hmhm = p.findall(cells[1].text.strip())
-        lesson_time = ['', '']
-        try:
-            for i in range(2):
-                lesson_time[i] += hmhm[2*i]+':'+hmhm[1 + 2*i]
-        except:
+        lesson_time = re.findall(r'\d{1,2}:\d{2}', cells[1].text)
+        if len(lesson_time) != 2:
             print(f'Bad time format: [ {cells[1].text} ]')
             print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
             lesson_time = ['8:00', '22:00']
-            
+
         for date in dates:
             data.append([date, lesson_time[0], lesson_time[1], location, group,
                          discipline, lesson_type, discipline_s + ' ' + lesson_type_s])
-    
+
 datalines = []
 for i in range(len(data)):
     j = i + 1
@@ -119,7 +115,7 @@ for i in range(len(data)):
                           data[i][4] + ': ' + data[i][5] + ', ' + data[i][6], data[i][7]])
 
 print(f'Load in selected period equals {2 * len(datalines)} hours. '
-      f'It is {7 * 2 * len(datalines) / max(1, len(date_sett)):.1f} hours per week in average.')
+      f'It is {7 * 2 * len(datalines) / max(1, len(date_range)):.1f} hours per week in average.')
 
 f_name = 'calendar_' + time.strftime('%d.%m') + '.csv'
 f = open(f_name, 'w', newline='', encoding='utf8')
