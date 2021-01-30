@@ -23,13 +23,12 @@ try:
         print(e)
         teacher = 'Володин Юрий Владимирович'
         begin_date = end_date = datetime.now()
-        print('Error!!! Check correctness of template!')
-        print('I will use default settings...')
+        print('Error!!! Check correctness of template!\n'
+              'I will use default settings...')
     finally:
         f.close()
 except(IOError, OSError) as e:
     print(e)
-    print()
     sys.exit('Error when reading settings.txt !!! Check also file encoding.')
 
 WEEKDAYS = {'Понедельник': 1, 'Вторник': 2, 'Среда': 3, 'Четверг': 4, 'Пятница': 5, 'Суббота': 6}
@@ -37,7 +36,6 @@ WEEKDAYS = {'Понедельник': 1, 'Вторник': 2, 'Среда': 3, '
 payload = {'template': '', 'action': 'index', 'admin_mode': '', 'nc_ctpl': 935, 'Teacher': teacher}
 rssu_url = 'https://rgsu.net/for-students/timetable/timetable.html'
 timetable = requests.get(rssu_url, params=payload)
-print(timetable.url)
 if not timetable.ok:
     sys.exit("Can't get page. Check connection to rgsu.net and try to restart this script.")
 
@@ -45,11 +43,9 @@ soup = BeautifulSoup(timetable.text, 'html.parser')
 
 trs = soup.find('div', class_="row collapse").find_all('tr')
 
-# ----- Diagnostic messages --------------------
 date_now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 while date_now.isoweekday() != 1:
     date_now -= timedelta(1)
-print('Begin of current week:', date_now.strftime("%d/%m/%Y (%A)"))  # begin of week
 # Sunday belongs to next week on this site
 if "Нечетная" in soup.find('div', class_="panel-green").find('p', class_="heading").text:
     odd_week = True
@@ -58,7 +54,6 @@ else:
     odd_week = False
 if datetime.now().isoweekday() == 7:
     odd_week = not odd_week
-# -----------------------------------------------
 
 date_range = [begin_date + timedelta(i) for i in range((end_date - begin_date).days + 1)]
 
@@ -73,9 +68,9 @@ for tr in trs[1:]:
         weekday = WEEKDAYS[cells[0].text.strip()]
         week = 0 if 'Четная' in cells[2].text else 1
         dates = [date.strftime("%d.%m.%y") for date in date_range
-                 if date.isoweekday() == weekday and (date - date_now).days // 7 % 2 == week]
+                 if (date.isoweekday() == weekday) and ((date - date_now).days // 7 % 2 == week)]
 
-    if len(dates) > 0:
+    if dates:
         discipline = re.findall(r'[а-яА-ЯёЁ -]+', cells[3].text)[0].strip()
         if len(discipline) > 16:
             discipline_s = ''.join([(w if len(w) == 1 else w[0].upper()) for w in discipline.split(' ')])
@@ -92,8 +87,8 @@ for tr in trs[1:]:
         group = cells[6].text.strip()
         lesson_time = re.findall(r'\d{1,2}:\d{2}', cells[1].text)
         if len(lesson_time) != 2:
-            print(f'Bad time format: [ {cells[1].text} ]')
-            print('See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
+            print(f'Bad time format: [ {cells[1].text} ].\n'
+                  'See timetable and manually correct time for:', cells[0].text, cells[2].text, group)
             lesson_time = ['8:00', '22:00']
 
         for date in dates:
@@ -124,4 +119,5 @@ with f:
     writer.writerow(['Start Date', 'Start Time', 'End Date', 'End Time', 'Location', 'Description', 'Subject'])
     writer.writerows(datalines)
 print('=' * 80)
-print(f'OK! Timetable was done - see file [{f_name}] in this directory.\nImport it to your Google Calendar.')
+print(f'OK! Timetable was done - see file [{f_name}] in this directory.\n'
+      'Import it to your Google Calendar.')
