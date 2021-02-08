@@ -45,15 +45,12 @@ trs = soup.find('div', class_="row collapse").find_all('tr')
 
 date_now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 while date_now.isoweekday() != 1:
-    date_now -= timedelta(1)
-# Sunday belongs to next week on this site
+    date_now -= timedelta(1)  # step back to monday
 if "Нечетная" in soup.find('div', class_="panel-green").find('p', class_="heading").text:
-    odd_week = True
-    date_now += timedelta(7)
-else:
-    odd_week = False
-if datetime.now().isoweekday() == 7:
-    odd_week = not odd_week
+    date_now += timedelta(7)  # change week to synchronize oddness
+# Sunday belongs to next week on this site
+# if datetime.now().isoweekday() == 7:
+#     date_now -= timedelta(7)  # change week to correct oddness in sunday
 
 date_range = [begin_date + timedelta(i) for i in range((end_date - begin_date).days + 1)]
 
